@@ -4,6 +4,12 @@ extern crate rand;
 use rand::Rng;
 
 use std::fs::File;
+/*  corrとsを書きましょう。
+ *
+ *
+ *
+ * 
+ */
 fn print_typename<T>(_: T) {
     println!("{}", std::any::type_name::<T>());
 }
@@ -19,6 +25,28 @@ fn print_colum(col: &Colum<f64>) {
 fn print_stringcolum(col: &Colum<String>) {
     println!("{}",col.name);
     println!("{:?}",col.data);
+}
+    
+fn mean(col: &Colum<f64>) -> Colum<f64> {
+    let  sum: f64 = col.data.iter().sum::<f64>();
+    let mean: f64 = sum  / col.data.len() as f64;
+    let _col = &col.name;
+    Colum {
+        name: _col.to_string(),
+        data: vec![mean]
+    }
+}
+fn var(col: &Colum<f64>) -> Colum<f64> {
+    fn cal(colum: &Colum<f64>,itr:usize,ans:f64) -> f64{
+        match itr == colum.data.len() {
+            true  => ans,
+            false => cal(&colum,itr + 1, ans + (colum.data[itr] - mean(&colum).data[0]) * (colum.data[itr] - mean(&colum).data[0]))
+        }
+    }
+    Colum{
+        name: col.name.to_string(),
+        data: vec![cal(&col,0,0.0)]
+    }
 }
 
 
@@ -177,21 +205,22 @@ fn mean_predict(df: &IrisDf) -> Box<Fn(f64) -> String> {
         }
     }
     _sepal_width_mean.sentosa    /= _species_num.sentosa;
-    _sepal_width_mean.versicolor /= _species_num.versicolor;
-    _sepal_width_mean.virginica  /= _species_num.virginica;
-    let bound_ver_vig = (_sepal_width_mean.sentosa    + _sepal_width_mean.versicolor) / 2.0;    
-    let bound_vig_sen = (_sepal_width_mean.versicolor + _sepal_width_mean.virginica ) / 2.0;
+    _sepal_width_mean.versicolor  /= _species_num.versicolor;
+    let bound_sen_ver = (_sepal_width_mean.sentosa    + _sepal_width_mean.versicolor ) / 2.0;    
     Box::new(move |_sepal_width|
-        if _sepal_width < bound_ver_vig {
+        if _sepal_width < bound_sen_ver {
             "versicolor".to_string()
-        } else if _sepal_width < bound_vig_sen {
-            "virginica".to_string()
-        }else {
+        } else {
             "setosa".to_string()
         }
     )
 }
-
+fn single_liner_regression(df: &IrisDf) {
+    let x1 = &df.sepal_length;
+    let x2 = &df.sepal_length;
+    let x1_mean = mean(&x1);
+    let x2_mean = mean(&x2);
+}
 fn correct_ans_rate(test: &IrisDf, predict: Box<Fn(f64) -> String>) -> f64 {
     let mut correct_num = 0.0;
     let (_tate,_yoko) = data_size(&test);
@@ -203,6 +232,7 @@ fn correct_ans_rate(test: &IrisDf, predict: Box<Fn(f64) -> String>) -> f64 {
     }
     100.0 * (correct_num / _tate as f64)
 }
+
 
 fn main() {
     let path = "test_data.csv";
